@@ -1,5 +1,5 @@
 import React from 'react';
-import { Model3D } from '@shared/types';
+import { Model3D } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MoreVertical, Eye, Code2, Trash2, Box } from 'lucide-react';
