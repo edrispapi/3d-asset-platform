@@ -17,7 +17,11 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
+    const method = (init?.method || 'GET').toString().toUpperCase();
+    const hasBody = init && 'body' in init && (init as any).body != null;
+    if (hasBody || method === 'POST' || method === 'PUT' || method === 'PATCH') {
+      headers.set('Content-Type', 'application/json');
+    }
   }
   if (path.startsWith('/api/')) {
     const token = localStorage.getItem('aetherlens_token');
@@ -25,7 +29,20 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       headers.set('Authorization', `Bearer ${token}`);
     }
   }
-  const res = await fetch(path, { ...init, headers });
+  // Compute final URL, allowing an override via VITE_API_ORIGIN or window.__AETHERLENS_API_ORIGIN__
+  let finalUrl = path;
+  // If this is an API path, optionally prefix with configured origin
+  if (path.startsWith('/api/')) {
+    const originFromWindow = typeof window !== 'undefined' ? (window as any).__AETHERLENS_API_ORIGIN__ : undefined;
+    const originFromEnv = (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env.VITE_API_ORIGIN) ? (import.meta as any).env.VITE_API_ORIGIN : undefined;
+    const apiOrigin = originFromWindow || originFromEnv;
+    if (apiOrigin) {
+      finalUrl = apiOrigin.replace(/\/+$/, '') + path;
+    }
+  }
+  const authPresent = headers.has('Authorization');
+  console.debug(`[api] ${finalUrl} Authorization:${authPresent ? 'present' : 'absent'}`);
+  const res = await fetch(finalUrl, { ...init, headers });
 
   const contentType = (res.headers.get('content-type') || '').toLowerCase();
 
