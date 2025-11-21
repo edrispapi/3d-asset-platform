@@ -1,17 +1,19 @@
 /**
- * AetherLens Entities: User and Model3D
+ * AetherLens Entities: User, Model3D, and Settings
  */
-import { IndexedEntity } from "./core-utils";
+import { IndexedEntity, Entity } from "./core-utils";
 import type { User, Model3D, ViewerConfig } from "@shared/types";
 import { DEFAULT_VIEWER_CONFIG } from "@shared/types";
-// USER ENTITY: one DO instance per user
+// USER ENTITY
 export class UserEntity extends IndexedEntity<User> {
   static readonly entityName = "user";
   static readonly indexName = "users";
   static readonly initialState: User = { id: "", name: "" };
-  static seedData: User[] = [{ id: 'u1', name: 'Admin User' }];
+  static seedData: User[] = [
+    { id: 'u1', name: 'Admin User', email: 'admin@aetherlens.io', role: 'admin' }
+  ];
 }
-// MODEL ENTITY: one DO instance per 3D model
+// MODEL ENTITY
 const SEED_MODELS: Model3D[] = [
   {
     id: 'm1',
@@ -50,4 +52,18 @@ export class ModelEntity extends IndexedEntity<Model3D> {
     config: DEFAULT_VIEWER_CONFIG,
   };
   static seedData = SEED_MODELS;
+}
+// SETTINGS ENTITY (Singleton)
+interface Settings {
+  theme: string;
+  arDefault: boolean;
+  uploadLimit: number;
+}
+export class SettingsEntity extends Entity<Settings> {
+  static readonly entityName = "settings";
+  static readonly initialState: Settings = {
+    theme: 'dark',
+    arDefault: true,
+    uploadLimit: 50,
+  };
 }

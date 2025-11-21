@@ -1,20 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/lib/store';
 import { ModelCard } from '@/components/dashboard/ModelCard';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Plus, Search, Box } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Search, Box } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -23,8 +12,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Model3D } from '@/lib/types';
-import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { UploadSimulator } from '@/components/dashboard/UploadSimulator';
+import { motion } from 'framer-motion';
 export function ModelManager() {
   const navigate = useNavigate();
   const models = useAppStore((state) => state.models);
@@ -32,27 +22,14 @@ export function ModelManager() {
   const fetchModels = useAppStore((state) => state.fetchModels);
   const addModel = useAppStore((state) => state.addModel);
   const deleteModel = useAppStore((state) => state.deleteModel);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newModelUrl, setNewModelUrl] = useState('');
-  const [newModelTitle, setNewModelTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   useEffect(() => {
     fetchModels();
   }, [fetchModels]);
-  const handleAddModel = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newModelUrl.trim() || !newModelTitle.trim()) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-    await addModel({ title: newModelTitle, url: newModelUrl });
-    setIsAddDialogOpen(false);
-    setNewModelUrl('');
-    setNewModelTitle('');
-  };
-  const filteredModels = models.filter((model) =>
-    model.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredModels = useMemo(() =>
+    models.filter((model) =>
+      model.title.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [models, searchQuery]);
   const handleView = (model: Model3D) => {
     navigate(`/dashboard/models/${model.id}`);
   };
@@ -62,7 +39,7 @@ export function ModelManager() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="aspect-[4/3] w-full" />
+              <Skeleton className="aspect-[4/3] w-full rounded-lg" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </div>
@@ -72,11 +49,30 @@ export function ModelManager() {
     }
     if (filteredModels.length > 0) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            visible: {
+              transition: {
+                staggerChildren: 0.05,
+              },
+            },
+          }}
+        >
           {filteredModels.map((model) => (
-            <ModelCard key={model.id} model={model} onDelete={deleteModel} onView={handleView} />
+            <motion.div
+              key={model.id}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <ModelCard model={model} onDelete={deleteModel} onView={handleView} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       );
     }
     return (
@@ -97,41 +93,17 @@ export function ModelManager() {
             <h1 className="text-3xl font-display font-bold text-zinc-100">3D Assets</h1>
             <p className="text-zinc-400 mt-1">Manage and distribute your 3D product library.</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 border-none">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Model
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New 3D Model</DialogTitle>
-                <DialogDescription className="text-zinc-400">
-                  Enter the URL of your GLB/GLTF file.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleAddModel} className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="title" className="text-zinc-300">Model Title</Label>
-                  <Input id="title" value={newModelTitle} onChange={(e) => setNewModelTitle(e.target.value)} placeholder="e.g. Vintage Chair" className="bg-zinc-900 border-zinc-800 focus:border-blue-500" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="url" className="text-zinc-300">GLB File URL</Label>
-                  <Input id="url" value={newModelUrl} onChange={(e) => setNewModelUrl(e.target.value)} placeholder="https://..." className="bg-zinc-900 border-zinc-800 focus:border-blue-500" />
-                </div>
-              </form>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-zinc-700 text-zinc-300 hover:bg-zinc-900 hover:text-white">Cancel</Button>
-                <Button onClick={handleAddModel} className="bg-blue-600 hover:bg-blue-500 text-white">Add Asset</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <UploadSimulator onUpload={addModel} />
         </div>
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <Input placeholder="Search models..." className="pl-9 bg-zinc-950 border-zinc-800 focus:border-zinc-700" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <Input
+              placeholder="Search models..."
+              className="pl-9 bg-zinc-950 border-zinc-800 focus:border-zinc-700"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Select defaultValue="all">

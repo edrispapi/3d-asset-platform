@@ -17,11 +17,12 @@ import { DashboardLayout } from '@/pages/dashboard/DashboardLayout';
 import { ModelManager } from '@/pages/dashboard/ModelManager';
 import { ModelDetail } from '@/pages/dashboard/ModelDetail';
 import { UserManagement } from '@/pages/dashboard/UserManagement';
+import { Settings } from '@/pages/dashboard/Settings';
 import { EmbedViewer } from '@/pages/embed/EmbedViewer';
 import { Login } from '@/pages/auth/Login';
 import { Toaster } from '@/components/ui/sonner';
 import { useAppStore } from './lib/store';
-const PrivateRoute: React.FC = () => {
+export const PrivateRoute: React.FC = () => {
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -65,7 +66,7 @@ const router = createBrowserRouter([
           },
           {
             path: "settings",
-            element: <div className="p-4 text-zinc-400">Settings module coming soon.</div>
+            element: <Settings />,
           }
         ]
       }

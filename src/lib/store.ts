@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import { Model3D, User } from '@shared/types';
 import { api } from './api-client';
 import { toast } from 'sonner';
+interface Settings {
+  theme: string;
+  arDefault: boolean;
+  uploadLimit: number;
+}
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
@@ -25,12 +30,17 @@ interface ModelState {
   deleteModel: (id: string) => Promise<void>;
   updateModel: (id: string, updates: Partial<Model3D>) => Promise<void>;
 }
-type AppState = AuthState & UserState & ModelState;
+interface SettingsState {
+  settings: Settings;
+  fetchSettings: () => Promise<void>;
+  updateSettings: (updates: Partial<Settings>) => Promise<void>;
+}
+type AppState = AuthState & UserState & ModelState & SettingsState;
 export const useAppStore = create<AppState>((set, get) => ({
   // Auth State
   isAuthenticated: false,
   user: null,
-  token: localStorage.getItem('aetherlens_token'),
+  token: null,
   login: async (credentials) => {
     const { token, user } = await api<{ token: string; user: User }>('/api/auth/login', {
       method: 'POST',
@@ -38,6 +48,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
     localStorage.setItem('aetherlens_token', token);
     set({ isAuthenticated: true, user, token });
+    await get().fetchSettings();
   },
   logout: () => {
     localStorage.removeItem('aetherlens_token');
@@ -46,10 +57,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   checkAuth: () => {
     const token = localStorage.getItem('aetherlens_token');
     if (token) {
-      // In a real app, you'd verify the token with the backend here
-      // For this mock, we'll just assume it's valid and fetch the user
       const user: User = { id: 'u1', name: 'Admin User', email: 'admin@aetherlens.io', role: 'admin' };
       set({ isAuthenticated: true, token, user });
+      get().fetchSettings();
     } else {
       set({ isAuthenticated: false, token: null, user: null });
     }
@@ -60,7 +70,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchUsers: async () => {
     try {
       set({ isLoadingUsers: true });
-      const users = await api<User[]>('/api/users');
+      const { items: users } = await api<{ items: User[] }>('/api/users');
       set({ users, isLoadingUsers: false });
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Failed to fetch users';
@@ -107,6 +117,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to add model';
       toast.error(errorMessage);
+      throw error;
     }
   },
   deleteModel: async (id: string) => {
@@ -139,7 +150,32 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ models: originalModels });
       const errorMessage = error instanceof Error ? error.message : 'Failed to update model';
       toast.error(errorMessage);
-      throw error; // Re-throw to be caught in component
+      throw error;
+    }
+  },
+  // Settings State
+  settings: { theme: 'dark', arDefault: true, uploadLimit: 50 },
+  fetchSettings: async () => {
+    try {
+      const settings = await api<Settings>('/api/settings');
+      set({ settings });
+    } catch (error) {
+      console.warn('Could not fetch settings, using defaults.');
+    }
+  },
+  updateSettings: async (updates) => {
+    const originalSettings = get().settings;
+    set(state => ({ settings: { ...state.settings, ...updates } }));
+    try {
+      const updatedSettings = await api<Settings>('/api/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+      set({ settings: updatedSettings });
+    } catch (error) {
+      set({ settings: originalSettings });
+      toast.error('Failed to update settings.');
+      throw error;
     }
   },
 }));
