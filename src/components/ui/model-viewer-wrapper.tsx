@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import '@google/model-viewer';
+
 import * as errorReporter from '@/lib/errorReporter';
 import { ViewerConfig } from '@shared/types';
 import { Loader2 } from 'lucide-react';
@@ -26,9 +26,24 @@ export function ModelViewerWrapper({
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const viewerRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Only attempt dynamic import on the client and if the element is not already registered.
+    if (typeof window === 'undefined') return;
+    try {
+      if (!customElements.get('model-viewer')) {
+        import('@google/model-viewer').catch((err) => {
+          (errorReporter as any)?.capture?.(err);
+          console.info('Failed to dynamically import @google/model-viewer', err);
+        });
+      }
+    } catch (err) {
+      (errorReporter as any)?.capture?.(err as any);
+    }
+  }, []);
   const handleLoad = useCallback(() => setIsLoading(false), []);
   const handleError = useCallback((event: Event) => {
-    errorReporter?.capture?.(new Error(`Model-viewer error for src: ${src}`));
+    (errorReporter as any)?.capture?.(new Error(`Model-viewer error for src: ${src}`));
     setIsLoading(false);
     setLoadError('Failed to load 3D model. Check URL and CORS policy.');
   }, [src]);
@@ -60,7 +75,7 @@ export function ModelViewerWrapper({
     if (!config.ar) return '';
     if (typeof window === 'undefined') return config.arModes || '';
     const isSecureContext = window.isSecureContext;
-    const hasXR = navigator.xr && typeof navigator.xr.isSessionSupported === 'function';
+    const hasXR = (navigator as any).xr && typeof (navigator as any).xr.isSessionSupported === 'function';
     if (isSecureContext && hasXR) {
       return config.arModes || 'webxr scene-viewer quick-look';
     }

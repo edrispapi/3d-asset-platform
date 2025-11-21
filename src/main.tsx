@@ -21,6 +21,7 @@ import { Settings } from '@/pages/dashboard/Settings';
 import { EmbedViewer } from '@/pages/embed/EmbedViewer';
 import { Login } from '@/pages/auth/Login';
 import { Toaster } from '@/components/ui/sonner';
+import { ThemeProvider } from 'next-themes';
 import { useAppStore } from './lib/store';
 export const PrivateRoute: React.FC = () => {
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
@@ -96,8 +97,10 @@ const router = createBrowserRouter([
 ]);
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary>
-      <RouterProvider router={router} />
-    </ErrorBoundary>
+    <ThemeProvider>
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </ThemeProvider>
   </StrictMode>,
 );

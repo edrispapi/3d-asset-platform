@@ -5,9 +5,26 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { Toaster, toast } from '@/components/ui/sonner'
-import type { User, Chat, ChatMessage } from '@shared/types'
+import type { User } from '@shared/types'
 import { api } from '@/lib/api-client'
 import { AppLayout } from '@/components/layout/AppLayout'
+
+/**
+ * Local demo types for Chat and ChatMessage.
+ * These mirror the minimal shape used by this page and
+ * avoid importing non-existent types from @shared/types.
+ */
+type Chat = {
+  id: string
+  title: string
+}
+
+type ChatMessage = {
+  id: string
+  userId: string
+  text: string
+  ts: string | number
+}
 
 export function DemoPage() {
   // Minimal state — small demo for AI to extend
