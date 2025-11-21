@@ -1,6 +1,21 @@
 import { ApiResponse } from "../../shared/types"
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers);
+  // Build Headers robustly from possible init.headers shapes (Headers | [key,value][] | object)
+  let headers = new Headers();
+  const incoming = init?.headers as HeadersInit | undefined;
+  if (incoming instanceof Headers) {
+    incoming.forEach((v, k) => headers.append(k, v));
+  } else if (Array.isArray(incoming)) {
+    // Handle array of [key, value] tuples
+    (incoming as Array<[string, string]>).forEach(([k, v]) => {
+      if (k && v !== undefined && v !== null) headers.append(k, String(v));
+    });
+  } else if (incoming && typeof incoming === 'object') {
+    Object.entries(incoming as Record<string, any>).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) headers.append(k, String(v));
+    });
+  }
+
   if (!headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
@@ -38,6 +53,20 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     parsed = await res.text().catch(() => '');
   }
 
+  // If parsed JSON follows ApiResponse<T> shape (has boolean 'success'), handle explicitly
+  if (contentType.includes('application/json') && parsed && typeof parsed === 'object' && typeof (parsed as any).success === 'boolean') {
+    const json = parsed as ApiResponse<T>;
+    if (json.success === false) {
+      throw new Error(json.error || `Request failed with status ${res.status}`);
+    }
+    // success === true
+    if (json.data !== undefined) {
+      return json.data;
+    }
+    // success true but no data provided; preserve previous behavior by returning undefined as T
+    return undefined as unknown as T;
+  }
+
   // For non-OK responses, include status and body when available
   if (!res.ok) {
     let bodySnippet = '';
@@ -49,15 +78,6 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(`Request failed with status ${res.status}${bodySnippet ? `: ${bodySnippet}` : ''}`);
   }
 
-  // For JSON responses, enforce ApiResponse<T> shape and behavior
-  if (contentType.includes('application/json')) {
-    const json = parsed as ApiResponse<T>;
-    if (!json.success || json.data === undefined) {
-      throw new Error(json.error || 'Request failed');
-    }
-    return json.data;
-  }
-
-  // For successful non-JSON responses, return the raw text as T
+  // If JSON but not ApiResponse-shaped, return the parsed JSON as-is (fallback)
   return parsed as unknown as T;
 }

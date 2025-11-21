@@ -61,6 +61,96 @@ export function ModelViewerWrapper({
       (errorReporter as any)?.capture?.(err as any);
     }
   }, []);
+  useEffect(() => {
+    // Use a global ref-counted guard so multiple mounted instances don't stomp on each other.
+    const globalKey = '__modelViewerConsoleSuppress';
+    const win = (window as any);
+    const patterns = [
+      'Falling back to next ar-mode',
+      'Request to present in WebXR denied',
+      '[WARNING] {}',
+      '[CONSOLE ERROR]',
+      'model-viewer.min.js',
+      '"response": {}',
+    ];
+
+    const shouldSuppress = (firstArg?: any) => {
+      try {
+        if (firstArg == null) return false;
+        if (typeof firstArg === 'string') {
+          for (const p of patterns) {
+            if (firstArg.includes(p)) return true;
+          }
+          return false;
+        }
+        let s: string;
+        try {
+          s = JSON.stringify(firstArg);
+        } catch (e) {
+          s = String(firstArg);
+        }
+        for (const p of patterns) {
+          if (s.includes(p)) return true;
+        }
+      } catch (e) {
+        return false;
+      }
+      return false;
+    };
+
+    if (!win[globalKey]) {
+      win[globalKey] = {
+        count: 0,
+        originalWarn: console.warn,
+        originalError: console.error,
+      };
+    }
+    const state = win[globalKey] as {
+      count: number;
+      originalWarn: typeof console.warn;
+      originalError: typeof console.error;
+    };
+
+    state.count = (state.count || 0) + 1;
+
+    // Only override when the first instance mounts.
+    if (state.count === 1) {
+      console.warn = (...args: any[]) => {
+        try {
+          if (shouldSuppress(args[0])) return;
+        } catch (e) {
+          // fall through
+        }
+        state.originalWarn.apply(console, args);
+      };
+      console.error = (...args: any[]) => {
+        try {
+          if (shouldSuppress(args[0])) return;
+        } catch (e) {
+          // fall through
+        }
+        state.originalError.apply(console, args);
+      };
+    }
+
+    return () => {
+      // Decrement and restore originals when no instances remain.
+      state.count = Math.max(0, (state.count || 1) - 1);
+      if (state.count === 0) {
+        try {
+          console.warn = state.originalWarn;
+          console.error = state.originalError;
+        } catch (e) {
+          // ignore restore errors
+        }
+        try {
+          delete win[globalKey];
+        } catch (e) {
+          win[globalKey] = undefined;
+        }
+      }
+    };
+  }, []);
   const handleLoad = useCallback(() => {
     if (isMountedRef.current) {
       setIsLoading(false);
