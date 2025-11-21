@@ -1,6 +1,6 @@
 # AetherLens - 3D Asset Management & WebAR Platform
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/edrispapi/3d-asset-platform)
 
 AetherLens is a sophisticated, visually immersive web platform designed for businesses to manage, visualize, and distribute 3D product models. It serves as a bridge between static e-commerce and spatial computing. The platform consists of two distinct environments: a secure, feature-rich Admin Dashboard for managing 3D assets (GLB/GLTF), generating embed codes, and managing customer accounts; and a high-performance, lightweight Public Viewer that renders interactive 3D models with Augmented Reality (AR) capabilities using Google's `<model-viewer>` technology. The system is built on Cloudflare's Edge network, ensuring low-latency delivery of asset metadata. The UI prioritizes a 'dark mode' aesthetic common in 3D software, utilizing glassmorphism, subtle gradients, and precise typography to frame the 3D content beautifully.
 
@@ -167,7 +167,7 @@ Deploy to Cloudflare Workers for global edge execution with Durable Objects for 
    ```
    This uploads the worker and assets to Cloudflare. The app will be live at your worker's URL (e.g., `https://aether-lens-3d.your-subdomain.workers.dev`).
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/edrispapi/3d-asset-platform)
 
 ### Post-Deployment
 
