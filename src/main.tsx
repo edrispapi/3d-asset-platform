@@ -10,6 +10,7 @@ import {
   Outlet,
 } from "react-router-dom";
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+
 import '@/index.css';
 import { HomePage } from '@/pages/HomePage';
 import { DashboardLayout } from '@/pages/dashboard/DashboardLayout';
@@ -29,21 +30,23 @@ export const PrivateRoute: React.FC = () => {
   return <Outlet />;
 };
 
-const ErrorFallback: React.FC = () => {
-  return <div role="alert">An unexpected error occurred. Please try again later.</div>;
-};
+
 
 const AppInitializer: React.FC = () => {
   useEffect(() => {
     useAppStore.getState().checkAuth();
   }, []);
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <Toaster richColors closeButton theme="dark" />
+    </>
+  );
 };
 const router = createBrowserRouter([
   {
     path: "/",
     element: <AppInitializer />,
-    errorElement: <ErrorFallback />,
     children: [
       {
         path: "/",
@@ -91,18 +94,10 @@ const router = createBrowserRouter([
     ]
   }
 ]);
-const RootApp: React.FC = () => {
-  return (
-    <>
-      <RouterProvider router={router} />
-      <Toaster richColors closeButton theme="dark" />
-    </>
-  );
-};
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <RootApp />
+      <RouterProvider router={router} />
     </ErrorBoundary>
   </StrictMode>,
 );

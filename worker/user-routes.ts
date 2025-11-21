@@ -13,6 +13,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // Basic Auth Middleware (for demo purposes)
   const authMiddleware = async (c: any, next: any) => {
     const authHeader = c.req.header('Authorization');
+    // The token is now 'mock-token-for-admin' as per the login response
     if (authHeader !== 'Bearer mock-token-for-admin') {
       return c.json({ success: false, error: 'Unauthorized' }, 401);
     }
@@ -97,12 +98,11 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // --- SETTINGS (Protected) ---
   app.get('/api/settings', authMiddleware, async (c) => {
     const settings = new SettingsEntity(c.env, 'global');
-    let state = await settings.getState();
-    if (!state || Object.keys(state).length === 0) {
-      // Initialize singleton settings with default initialState if missing/empty
-      await settings.patch(SettingsEntity.initialState);
-      state = await settings.getState();
+    if (!(await settings.exists())) {
+      // Initialize singleton settings with default initialState if it doesn't exist.
+      await settings.save(SettingsEntity.initialState);
     }
+    const state = await settings.getState();
     return ok(c, state);
   });
   app.patch('/api/settings', authMiddleware, async (c) => {

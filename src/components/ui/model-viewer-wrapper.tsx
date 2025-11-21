@@ -1,15 +1,6 @@
-import "react";
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import '@google/model-viewer';
 import * as errorReporter from '@/lib/errorReporter';
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'model-viewer': any;
-    }
-  }
-}
 import { ViewerConfig } from '@shared/types';
 import { Loader2 } from 'lucide-react';
 interface ModelViewerWrapperProps {
@@ -58,26 +49,40 @@ export function ModelViewerWrapper({
       viewer.removeEventListener('error', handleError);
       viewer.removeEventListener('progress', handleProgress);
     };
-  }, [src, JSON.stringify(config), handleLoad, handleError, handleProgress]);
-  const backgroundColor = theme.backgroundColor;
+  }, [viewerRef, handleLoad, handleError, handleProgress]);
   const viewerStyle = useMemo(() => ({
     width: '100%',
     height: '100%',
-    backgroundColor: backgroundColor || 'transparent',
+    backgroundColor: theme.backgroundColor || 'transparent',
     '--ar-button-display': 'none', // Hide default button
-  }), [backgroundColor]);
+  }), [theme.backgroundColor]);
   const computedArModes = useMemo(() => {
     if (!config.ar) return '';
     if (typeof window === 'undefined') return config.arModes || '';
-    const secure = (window as any).isSecureContext;
-    const hasXR = !!(navigator as any).xr;
-    // Only enable AR modes if running in a secure context and XR is available
-    if (secure && hasXR) {
-      return config.arModes || '';
+    const isSecureContext = window.isSecureContext;
+    const hasXR = navigator.xr && typeof navigator.xr.isSessionSupported === 'function';
+    if (isSecureContext && hasXR) {
+      return config.arModes || 'webxr scene-viewer quick-look';
     }
-    // Fallback to empty string to avoid enabling AR modes that aren't supported
+    if (config.ar) {
+        console.info('AR support is unavailable in this browser or context. Requires a secure (HTTPS) connection and WebXR support.');
+    }
     return '';
   }, [config.ar, config.arModes]);
+  const viewerProps = useMemo(() => ({
+    src,
+    poster,
+    alt: alt || '3D Model',
+    'auto-play': autoPlay,
+    'auto-rotate': config.autoRotate || autoPlay,
+    'camera-controls': config.cameraControls,
+    ar: config.ar,
+    'ar-modes': computedArModes,
+    'shadow-intensity': config.shadowIntensity,
+    exposure: config.exposure,
+    loading: 'eager' as const,
+    'dev-mode': false,
+  }), [src, poster, alt, autoPlay, config, computedArModes]);
   if (loadError) {
     return (
       <div className={`flex items-center justify-center bg-zinc-900/50 text-red-400 h-full w-full rounded-lg border border-zinc-800 ${className}`}>
@@ -100,18 +105,7 @@ export function ModelViewerWrapper({
       )}
       <model-viewer
         ref={viewerRef}
-        src={src}
-        poster={poster}
-        alt={alt || '3D Model'}
-        auto-play={autoPlay ? 'true' : 'false'}
-        auto-rotate={(config.autoRotate || autoPlay) ? 'true' : 'false'}
-        camera-controls={config.cameraControls ? 'true' : 'false'}
-        ar={config.ar ? 'true' : 'false'}
-        ar-modes={computedArModes}
-        shadow-intensity={config.shadowIntensity != null ? String(config.shadowIntensity) : undefined}
-        exposure={config.exposure != null ? String(config.exposure) : undefined}
-        loading="eager"
-        dev-mode="false"
+        {...viewerProps}
         style={viewerStyle}
       >
         <button
