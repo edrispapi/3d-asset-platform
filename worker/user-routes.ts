@@ -97,7 +97,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // --- SETTINGS (Protected) ---
   app.get('/api/settings', authMiddleware, async (c) => {
     const settings = new SettingsEntity(c.env, 'global');
-    const state = await settings.getState();
+    let state = await settings.getState();
+    if (!state || Object.keys(state).length === 0) {
+      // Initialize singleton settings with default initialState if missing/empty
+      await settings.patch(SettingsEntity.initialState);
+      state = await settings.getState();
+    }
     return ok(c, state);
   });
   app.patch('/api/settings', authMiddleware, async (c) => {

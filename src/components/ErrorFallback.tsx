@@ -1,101 +1,71 @@
+/**
+ * src/components/ErrorFallback.tsx
+ *
+ * A simple, generic error fallback component to be used across the app.
+ * - Does not rely on React Router hooks.
+ * - Accessible (role="alert", aria-live).
+ * - Small, centered, and styled with Tailwind CSS.
+ *
+ * Props:
+ *  - message?: string        -> Primary error message (defaults to a generic message)
+ *  - details?: string        -> Optional smaller details text (non-sensitive)
+ *  - onRetry?: () => void    -> Optional retry handler rendered as a button
+ *
+ * This file is TypeScript + React and intended to be production-ready and type-safe.
+ */
 import React from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-
 export interface ErrorFallbackProps {
-  title?: string;
+  /**
+   * Primary error message shown to the user.
+   */
   message?: string;
-  error?: Error | any;
+  /**
+   * Optional supplementary details. Should not contain sensitive info.
+   */
+  details?: string;
+  /**
+   * Optional retry handler (e.g., re-fetch or reset). If provided, a retry button is shown.
+   */
   onRetry?: () => void;
-  onGoHome?: () => void;
-  showErrorDetails?: boolean;
-  statusMessage?: string;
 }
-
-export function ErrorFallback({
-  title = "Oops! Something went wrong",
-  message = "We're aware of the issue and actively working to fix it. Your experience matters to us.",
-  error,
+/**
+ * ErrorFallback
+ *
+ * Generic UI to display when an unexpected error occurs.
+ * It intentionally avoids any React Router-specific hooks so it can be used anywhere.
+ */
+export const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+  message = 'An unexpected error occurred.',
+  details,
   onRetry,
-  onGoHome,
-  showErrorDetails = true,
-  statusMessage = "Our team has been notified"
-}: ErrorFallbackProps) {
-  const handleRetry = () => {
-    if (onRetry) {
-      onRetry();
-    } else {
-      window.location.reload();
-    }
-  };
-
-  const handleGoHome = () => {
-    if (onGoHome) {
-      onGoHome();
-    } else {
-      window.location.href = '/';
-    }
-  };
-
+}) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        {/* Animated background gradient */}
-        <div className="absolute inset-0 bg-gradient-rainbow opacity-5 dark:opacity-10" />
-        
-        {/* Error card */}
-        <Card className="relative backdrop-blur-sm shadow-2xl">
-          <CardContent className="p-8 space-y-6">
-            {/* Icon and title */}
-            <div className="text-center space-y-4">
-              <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center">
-                <AlertTriangle className="w-8 h-8 text-destructive" />
-              </div>
-              <h1 className="text-2xl font-bold">{title}</h1>
-              <p className="text-muted-foreground">{message}</p>
-            </div>
-
-            {/* Status indicator */}
-            {statusMessage && (
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                <span>{statusMessage}</span>
-              </div>
-            )}
-
-            {/* Action buttons */}
-            <div className="space-y-3">
-              <Button onClick={handleRetry} className="w-full">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Try Again
-              </Button>
-              <Button onClick={handleGoHome} variant="secondary" className="w-full">
-                <Home className="w-4 h-4 mr-2" />
-                Go to Homepage
-              </Button>
-            </div>
-
-            {/* Error details (collapsible) */}
-            {process.env.NODE_ENV === 'development' && showErrorDetails && error && (
-              <details className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                  Error details (Development only)
-                </summary>
-                <pre className="mt-3 text-xs overflow-auto max-h-40 text-muted-foreground">
-                  {error.message || error.toString()}
-                  {error.stack && '\n\n' + error.stack + '\n\n' + error.componentStack}
-                </pre>
-              </details>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Support text */}
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          If this problem persists, please contact our support team
-        </p>
+    <div
+      role="alert"
+      aria-live="assertive"
+      className="w-full flex items-center justify-center p-6"
+    >
+      <div className="max-w-lg w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-sm px-6 py-8 text-center">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          {message}
+        </h2>
+        {details ? (
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{details}</p>
+        ) : (
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+            Please try again or contact support if the problem persists.
+          </p>
+        )}
+        {onRetry ? (
+          <div className="mt-4 flex items-center justify-center">
+            <Button variant="default" onClick={onRetry}>
+              Try again
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
-}
+};
+export default ErrorFallback;

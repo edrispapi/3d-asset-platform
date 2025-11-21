@@ -179,5 +179,4 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 }));
-// Initialize auth state on load
-useAppStore.getState().checkAuth();
+ // Initialize auth state on load

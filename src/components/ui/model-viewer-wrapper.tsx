@@ -1,5 +1,7 @@
+import "react";
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import '@google/model-viewer';
+import * as errorReporter from '@/lib/errorReporter';
 
 declare global {
   namespace JSX {
@@ -32,10 +34,10 @@ export function ModelViewerWrapper({
 }: ModelViewerWrapperProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const viewerRef = useRef<HTMLElement>(null);
+  const viewerRef = useRef<any>(null);
   const handleLoad = useCallback(() => setIsLoading(false), []);
   const handleError = useCallback((event: Event) => {
-    console.warn(`Model-viewer error for src: ${src}`, event);
+    errorReporter?.capture?.(new Error(`Model-viewer error for src: ${src}`));
     setIsLoading(false);
     setLoadError('Failed to load 3D model. Check URL and CORS policy.');
   }, [src]);
@@ -51,18 +53,31 @@ export function ModelViewerWrapper({
     viewer.addEventListener('load', handleLoad);
     viewer.addEventListener('error', handleError);
     viewer.addEventListener('progress', handleProgress);
-    return () => { // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
       viewer.removeEventListener('load', handleLoad);
       viewer.removeEventListener('error', handleError);
       viewer.removeEventListener('progress', handleProgress);
     };
-  }, [src, config, handleLoad, handleError, handleProgress]);
+  }, [src, JSON.stringify(config), handleLoad, handleError, handleProgress]);
+  const backgroundColor = theme.backgroundColor;
   const viewerStyle = useMemo(() => ({
     width: '100%',
     height: '100%',
-    backgroundColor: theme.backgroundColor || 'transparent',
+    backgroundColor: backgroundColor || 'transparent',
     '--ar-button-display': 'none', // Hide default button
-  }), [theme.backgroundColor]);
+  }), [backgroundColor]);
+  const computedArModes = useMemo(() => {
+    if (!config.ar) return '';
+    if (typeof window === 'undefined') return config.arModes || '';
+    const secure = (window as any).isSecureContext;
+    const hasXR = !!(navigator as any).xr;
+    // Only enable AR modes if running in a secure context and XR is available
+    if (secure && hasXR) {
+      return config.arModes || '';
+    }
+    // Fallback to empty string to avoid enabling AR modes that aren't supported
+    return '';
+  }, [config.ar, config.arModes]);
   if (loadError) {
     return (
       <div className={`flex items-center justify-center bg-zinc-900/50 text-red-400 h-full w-full rounded-lg border border-zinc-800 ${className}`}>
@@ -88,13 +103,15 @@ export function ModelViewerWrapper({
         src={src}
         poster={poster}
         alt={alt || '3D Model'}
-        auto-rotate={config.autoRotate || autoPlay}
-        camera-controls={config.cameraControls}
-        ar={config.ar}
-        ar-modes={config.arModes}
-        shadow-intensity={config.shadowIntensity}
-        exposure={config.exposure}
+        auto-play={autoPlay ? 'true' : 'false'}
+        auto-rotate={(config.autoRotate || autoPlay) ? 'true' : 'false'}
+        camera-controls={config.cameraControls ? 'true' : 'false'}
+        ar={config.ar ? 'true' : 'false'}
+        ar-modes={computedArModes}
+        shadow-intensity={config.shadowIntensity != null ? String(config.shadowIntensity) : undefined}
+        exposure={config.exposure != null ? String(config.exposure) : undefined}
         loading="eager"
+        dev-mode="false"
         style={viewerStyle}
       >
         <button

@@ -1,7 +1,7 @@
 import '@/lib/errorReporter';
 import { enableMapSet } from "immer";
-enableMapSet();
-import React, { StrictMode } from 'react';
+
+import React, { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   createBrowserRouter,
@@ -10,7 +10,6 @@ import {
   Outlet,
 } from "react-router-dom";
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css';
 import { HomePage } from '@/pages/HomePage';
 import { DashboardLayout } from '@/pages/dashboard/DashboardLayout';
@@ -29,60 +28,81 @@ export const PrivateRoute: React.FC = () => {
   }
   return <Outlet />;
 };
+
+const ErrorFallback: React.FC = () => {
+  return <div role="alert">An unexpected error occurred. Please try again later.</div>;
+};
+
+const AppInitializer: React.FC = () => {
+  useEffect(() => {
+    useAppStore.getState().checkAuth();
+  }, []);
+  return <Outlet />;
+};
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <HomePage />,
-    errorElement: <RouteErrorBoundary />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
-    errorElement: <RouteErrorBoundary />,
-  },
-  {
-    path: "/dashboard",
-    element: <PrivateRoute />,
+    element: <AppInitializer />,
+    errorElement: <ErrorFallback />,
     children: [
       {
-        element: <DashboardLayout />,
-        errorElement: <RouteErrorBoundary />,
+        path: "/",
+        element: <HomePage />,
+      },
+      {
+        path: "/login",
+        element: <Login />,
+      },
+      {
+        path: "/dashboard",
+        element: <PrivateRoute />,
         children: [
           {
-            index: true,
-            element: <Navigate to="/dashboard/models" replace />
-          },
-          {
-            path: "models",
-            element: <ModelManager />,
-          },
-          {
-            path: "models/:id",
-            element: <ModelDetail />,
-          },
-          {
-            path: "users",
-            element: <UserManagement />,
-          },
-          {
-            path: "settings",
-            element: <Settings />,
+            element: <DashboardLayout />,
+            children: [
+              {
+                index: true,
+                element: <Navigate to="/dashboard/models" replace />
+              },
+              {
+                path: "models",
+                element: <ModelManager />,
+              },
+              {
+                path: "models/:id",
+                element: <ModelDetail />,
+              },
+              {
+                path: "users",
+                element: <UserManagement />,
+              },
+              {
+                path: "settings",
+                element: <Settings />,
+              }
+            ]
           }
         ]
+      },
+      {
+        path: "/embed/:id",
+        element: <EmbedViewer />,
       }
     ]
-  },
-  {
-    path: "/embed/:id",
-    element: <EmbedViewer />,
-    errorElement: <RouteErrorBoundary />,
   }
 ]);
+const RootApp: React.FC = () => {
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster richColors closeButton theme="dark" />
+    </>
+  );
+};
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <RouterProvider router={router} />
-      <Toaster richColors closeButton theme="dark" />
+      <RootApp />
     </ErrorBoundary>
   </StrictMode>,
 );
