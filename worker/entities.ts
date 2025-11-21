@@ -1,41 +1,53 @@
 /**
- * Minimal real-world demo: One Durable Object instance per entity (User, ChatBoard), with Indexes for listing.
+ * AetherLens Entities: User and Model3D
  */
 import { IndexedEntity } from "./core-utils";
-import type { User, Chat, ChatMessage } from "@shared/types";
-import { MOCK_CHAT_MESSAGES, MOCK_CHATS, MOCK_USERS } from "@shared/mock-data";
-
+import type { User, Model3D, ViewerConfig } from "@shared/types";
+import { DEFAULT_VIEWER_CONFIG } from "@shared/types";
 // USER ENTITY: one DO instance per user
 export class UserEntity extends IndexedEntity<User> {
   static readonly entityName = "user";
   static readonly indexName = "users";
   static readonly initialState: User = { id: "", name: "" };
-  static seedData = MOCK_USERS;
+  static seedData: User[] = [{ id: 'u1', name: 'Admin User' }];
 }
-
-// CHAT BOARD ENTITY: one DO instance per chat board, stores its own messages
-export type ChatBoardState = Chat & { messages: ChatMessage[] };
-
-const SEED_CHAT_BOARDS: ChatBoardState[] = MOCK_CHATS.map(c => ({
-  ...c,
-  messages: MOCK_CHAT_MESSAGES.filter(m => m.chatId === c.id),
-}));
-
-export class ChatBoardEntity extends IndexedEntity<ChatBoardState> {
-  static readonly entityName = "chat";
-  static readonly indexName = "chats";
-  static readonly initialState: ChatBoardState = { id: "", title: "", messages: [] };
-  static seedData = SEED_CHAT_BOARDS;
-
-  async listMessages(): Promise<ChatMessage[]> {
-    const { messages } = await this.getState();
-    return messages;
+// MODEL ENTITY: one DO instance per 3D model
+const SEED_MODELS: Model3D[] = [
+  {
+    id: 'm1',
+    title: 'Astronaut',
+    url: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+    posterUrl: 'https://modelviewer.dev/shared-assets/models/Astronaut.webp',
+    createdAt: Date.now(),
+    config: { ...DEFAULT_VIEWER_CONFIG },
+    size: '2.5MB',
+  },
+  {
+    id: 'm2',
+    title: 'Neil Armstrong Spacesuit',
+    url: 'https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb',
+    createdAt: Date.now() - 100000,
+    config: { ...DEFAULT_VIEWER_CONFIG, autoRotate: false },
+    size: '5.1MB',
+  },
+  {
+    id: 'm3',
+    title: 'Canoe',
+    url: 'https://modelviewer.dev/shared-assets/models/Canoe.glb',
+    createdAt: Date.now() - 200000,
+    config: { ...DEFAULT_VIEWER_CONFIG },
+    size: '8.2MB',
   }
-
-  async sendMessage(userId: string, text: string): Promise<ChatMessage> {
-    const msg: ChatMessage = { id: crypto.randomUUID(), chatId: this.id, userId, text, ts: Date.now() };
-    await this.mutate(s => ({ ...s, messages: [...s.messages, msg] }));
-    return msg;
-  }
+];
+export class ModelEntity extends IndexedEntity<Model3D> {
+  static readonly entityName = "model";
+  static readonly indexName = "models";
+  static readonly initialState: Model3D = {
+    id: "",
+    title: "",
+    url: "",
+    createdAt: 0,
+    config: DEFAULT_VIEWER_CONFIG,
+  };
+  static seedData = SEED_MODELS;
 }
-

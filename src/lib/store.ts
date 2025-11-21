@@ -1,47 +1,78 @@
 import { create } from 'zustand';
-import { Model3D, DEFAULT_VIEWER_CONFIG } from './types';
+import { Model3D } from './types';
+import { api } from './api-client';
+import { toast } from 'sonner';
 interface AppState {
   models: Model3D[];
-  addModel: (model: Model3D) => void;
-  deleteModel: (id: string) => void;
-  updateModel: (id: string, updates: Partial<Model3D>) => void;
+  isLoading: boolean;
+  error: string | null;
+  fetchModels: () => Promise<void>;
+  addModel: (newModelData: { title: string; url: string }) => Promise<void>;
+  deleteModel: (id: string) => Promise<void>;
+  updateModel: (id: string, updates: Partial<Model3D>) => Promise<void>;
   getModel: (id: string) => Model3D | undefined;
 }
-// Initial mock data for the demo
-const INITIAL_MODELS: Model3D[] = [
-  {
-    id: 'm1',
-    title: 'Astronaut',
-    url: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-    posterUrl: 'https://modelviewer.dev/shared-assets/models/Astronaut.webp',
-    createdAt: Date.now(),
-    config: { ...DEFAULT_VIEWER_CONFIG },
-    size: '2.5MB',
-  },
-  {
-    id: 'm2',
-    title: 'Neil Armstrong Spacesuit',
-    url: 'https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb',
-    createdAt: Date.now() - 100000,
-    config: { ...DEFAULT_VIEWER_CONFIG, autoRotate: false },
-    size: '5.1MB',
-  },
-  {
-    id: 'm3',
-    title: 'Canoe',
-    url: 'https://modelviewer.dev/shared-assets/models/Canoe.glb',
-    createdAt: Date.now() - 200000,
-    config: { ...DEFAULT_VIEWER_CONFIG },
-    size: '8.2MB',
-  }
-];
 export const useAppStore = create<AppState>((set, get) => ({
-  models: INITIAL_MODELS,
-  addModel: (model) => set((state) => ({ models: [model, ...state.models] })),
-  deleteModel: (id) => set((state) => ({ models: state.models.filter((m) => m.id !== id) })),
-  updateModel: (id, updates) =>
+  models: [],
+  isLoading: true,
+  error: null,
+  fetchModels: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      const models = await api<Model3D[]>('/api/models');
+      set({ models, isLoading: false });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch models';
+      set({ isLoading: false, error: errorMessage });
+      toast.error(errorMessage);
+    }
+  },
+  addModel: async (newModelData) => {
+    try {
+      const newModel = await api<Model3D>('/api/models', {
+        method: 'POST',
+        body: JSON.stringify(newModelData),
+      });
+      set((state) => ({ models: [newModel, ...state.models] }));
+      toast.success(`Model "${newModel.title}" added successfully.`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add model';
+      toast.error(errorMessage);
+    }
+  },
+  deleteModel: async (id: string) => {
+    const originalModels = get().models;
+    // Optimistic update
+    set((state) => ({ models: state.models.filter((m) => m.id !== id) }));
+    toast.warning('Deleting model...');
+    try {
+      await api(`/api/models/${id}`, { method: 'DELETE' });
+      toast.success('Model deleted successfully.');
+    } catch (error) {
+      // Revert on failure
+      set({ models: originalModels });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete model';
+      toast.error(errorMessage);
+    }
+  },
+  updateModel: async (id, updates) => {
+    const originalModels = get().models;
+    // Optimistic update
     set((state) => ({
       models: state.models.map((m) => (m.id === id ? { ...m, ...updates } : m)),
-    })),
-  getModel: (id) => get().models.find((m) => m.id === id),
+    }));
+    try {
+      // In a real app, you'd have a PUT/PATCH endpoint
+      // await api(`/api/models/${id}`, { method: 'PATCH', body: JSON.stringify(updates) });
+      console.log('Simulating model update for:', id, updates);
+      toast.success('Model updated (simulated).');
+    } catch (error) {
+      set({ models: originalModels });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update model';
+      toast.error(errorMessage);
+    }
+  },
+  getModel: (id: string) => {
+    return get().models.find((m) => m.id === id);
+  },
 }));

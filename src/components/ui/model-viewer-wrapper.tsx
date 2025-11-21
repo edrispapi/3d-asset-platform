@@ -52,9 +52,8 @@ export function ModelViewerWrapper({
     const handleError = (event: Event) => {
       console.error('Model viewer error:', event);
       setIsLoading(false);
-      setLoadError('Failed to load 3D model');
+      setLoadError('Failed to load 3D model. Check URL and CORS policy.');
     };
-    // Progress listener could be added here
     viewer.addEventListener('load', handleLoad);
     viewer.addEventListener('error', handleError);
     return () => {
@@ -93,14 +92,12 @@ export function ModelViewerWrapper({
         loading="eager"
         style={{ width: '100%', height: '100%' }}
       >
-        {/* Custom AR Button */}
-        <button 
-          slot="ar-button" 
+        <button
+          slot="ar-button"
           className="absolute bottom-4 right-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium shadow-lg transform transition-transform active:scale-95 hidden md:block"
         >
           View in AR
         </button>
-        {/* Progress Bar (Standard model-viewer slot) */}
         <div slot="progress-bar" className="absolute top-0 left-0 w-full h-1 bg-zinc-800">
           <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: '0%' }} id="progress-bar-fill"></div>
         </div>

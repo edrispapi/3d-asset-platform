@@ -3,22 +3,36 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
 }
-
-// Minimal real-world chat example types (shared by frontend and worker)
+// AetherLens Type Definitions
+export interface ViewerConfig {
+  autoRotate: boolean;
+  cameraControls: boolean;
+  shadowIntensity: number;
+  exposure: number;
+  ar: boolean;
+  arModes: string;
+}
+export interface Model3D {
+  id: string;
+  title: string;
+  url: string;
+  posterUrl?: string;
+  createdAt: number;
+  config: ViewerConfig;
+  size?: string; // Human readable size e.g. "12MB"
+}
 export interface User {
   id: string;
   name: string;
+  email?: string;
+  role?: 'admin' | 'user';
+  avatarUrl?: string;
 }
-
-export interface Chat {
-  id: string;
-  title: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  chatId: string;
-  userId: string;
-  text: string;
-  ts: number; // epoch millis
-}
+export const DEFAULT_VIEWER_CONFIG: ViewerConfig = {
+  autoRotate: true,
+  cameraControls: true,
+  shadowIntensity: 1,
+  exposure: 1,
+  ar: true,
+  arModes: 'webxr scene-viewer quick-look',
+};
