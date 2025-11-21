@@ -26,26 +26,73 @@ export function ModelViewerWrapper({
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const viewerRef = useRef<any>(null);
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
-    // Only attempt dynamic import on the client and if the element is not already registered.
+    // Only attempt to load model-viewer on the client and if it's not already registered.
     if (typeof window === 'undefined') return;
     try {
-      if (!customElements.get('model-viewer')) {
-        import('@google/model-viewer').catch((err) => {
-          (errorReporter as any)?.capture?.(err);
-          console.info('Failed to dynamically import @google/model-viewer', err);
-        });
-      }
+      if (customElements.get('model-viewer')) return;
+      const existingScript = document.getElementById('model-viewer-script') as HTMLScriptElement | null;
+      if (existingScript) return;
+      const script = document.createElement('script');
+      script.id = 'model-viewer-script';
+      script.type = 'module';
+      // Use CDN ESM build
+      script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+      script.onload = () => {
+        // model-viewer registers itself when the script loads
+      };
+      script.onerror = (err) => {
+        (errorReporter as any)?.capture?.(err);
+        if (isMountedRef.current) {
+          setLoadError('Failed to load 3D viewer library.');
+        }
+        console.info('Failed to load @google/model-viewer from CDN', err);
+      };
+      document.head.appendChild(script);
     } catch (err) {
       (errorReporter as any)?.capture?.(err as any);
     }
   }, []);
-  const handleLoad = useCallback(() => setIsLoading(false), []);
-  const handleError = useCallback((event: Event) => {
-    (errorReporter as any)?.capture?.(new Error(`Model-viewer error for src: ${src}`));
-    setIsLoading(false);
-    setLoadError('Failed to load 3D model. Check URL and CORS policy.');
+  const handleLoad = useCallback(() => {
+    if (isMountedRef.current) {
+      setIsLoading(false);
+    }
+  }, []);
+  const handleError = useCallback(async (event: Event) => {
+    const baseErr = new Error(`Model-viewer error for src: ${src}`);
+    (errorReporter as any)?.capture?.(baseErr);
+    // Attempt to distinguish network/CORS issues by performing a HEAD request.
+    try {
+      const resp = await fetch(src, { method: 'HEAD', mode: 'cors' });
+      if (!resp.ok) {
+        (errorReporter as any)?.capture?.(new Error(`HEAD request failed with status ${resp.status} for ${src}`));
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          setLoadError(`Failed to fetch 3D model: HTTP ${resp.status}`);
+        }
+      } else {
+        // HEAD succeeded but model-viewer still errored.
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          setLoadError('Failed to load 3D model. Check file integrity or supported formats.');
+        }
+      }
+    } catch (fetchErr) {
+      // Likely network or CORS error (TypeError), treat as CORS-blocked for user-friendly messaging.
+      (errorReporter as any)?.capture?.(fetchErr as any);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setLoadError('Model blocked by CORS—host the file on a public CDN with Access-Control-Allow-Origin: *');
+      }
+    }
   }, [src]);
   const handleProgress = useCallback((event: CustomEvent) => {
     const progressBar = viewerRef.current?.querySelector('#progress-bar-fill') as HTMLElement | null;
@@ -70,34 +117,35 @@ export function ModelViewerWrapper({
     height: '100%',
     backgroundColor: theme.backgroundColor || 'transparent',
     '--ar-button-display': 'none', // Hide default button
-  }), [theme.backgroundColor]);
+  } as any), [theme.backgroundColor]);
+  const { autoRotate, cameraControls, ar, arModes, shadowIntensity, exposure } = config;
   const computedArModes = useMemo(() => {
-    if (!config.ar) return '';
-    if (typeof window === 'undefined') return config.arModes || '';
+    if (!ar) return '';
+    if (typeof window === 'undefined') return arModes || '';
     const isSecureContext = window.isSecureContext;
     const hasXR = (navigator as any).xr && typeof (navigator as any).xr.isSessionSupported === 'function';
     if (isSecureContext && hasXR) {
-      return config.arModes || 'webxr scene-viewer quick-look';
+      return arModes || 'webxr scene-viewer quick-look';
     }
-    if (config.ar) {
-        console.info('AR support is unavailable in this browser or context. Requires a secure (HTTPS) connection and WebXR support.');
+    if (ar) {
+      console.info('AR support is unavailable in this browser or context. Requires a secure (HTTPS) connection and WebXR support.');
     }
     return '';
-  }, [config.ar, config.arModes]);
+  }, [ar, arModes]);
   const viewerProps = useMemo(() => ({
     src,
     poster,
     alt: alt || '3D Model',
     'auto-play': autoPlay,
-    'auto-rotate': config.autoRotate || autoPlay,
-    'camera-controls': config.cameraControls,
-    ar: config.ar,
+    'auto-rotate': autoRotate || autoPlay,
+    'camera-controls': cameraControls,
+    ar: computedArModes ? true : undefined,
     'ar-modes': computedArModes,
-    'shadow-intensity': config.shadowIntensity,
-    exposure: config.exposure,
+    'shadow-intensity': shadowIntensity,
+    exposure: exposure,
     loading: 'eager' as const,
-    'dev-mode': false,
-  }), [src, poster, alt, autoPlay, config, computedArModes]);
+    'crossorigin': 'anonymous',
+  }), [src, poster, alt, autoPlay, autoRotate, cameraControls, computedArModes, shadowIntensity, exposure]);
   if (loadError) {
     return (
       <div className={`flex items-center justify-center bg-zinc-900/50 text-red-400 h-full w-full rounded-lg border border-zinc-800 ${className}`}>
