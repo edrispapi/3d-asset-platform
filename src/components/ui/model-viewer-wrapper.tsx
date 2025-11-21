@@ -1,5 +1,13 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import '@google/model-viewer';
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': any;
+    }
+  }
+}
 import { ViewerConfig } from '@shared/types';
 import { Loader2 } from 'lucide-react';
 interface ModelViewerWrapperProps {
