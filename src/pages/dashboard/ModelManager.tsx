@@ -9,9 +9,9 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
-import { Model3D } from '@/lib/types';
+import { Model3D } from '@shared/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UploadSimulator } from '@/components/dashboard/UploadSimulator';
 import { motion } from 'framer-motion';

@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { ArrowLeft, Code2, Copy, Check } from 'lucide-react';
-import { Model3D, ViewerConfig } from '@/lib/types';
+import { Model3D, ViewerConfig } from '@shared/types';
 import { api } from '@/lib/api-client';
 export function ModelDetail() {
   const { id } = useParams<{ id: string }>();

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import '@google/model-viewer';
-import { ViewerConfig } from '@/lib/types';
+import { ViewerConfig } from '@shared/types';
 import { Loader2 } from 'lucide-react';
 interface ModelViewerWrapperProps {
   src: string;
@@ -43,12 +43,12 @@ export function ModelViewerWrapper({
     viewer.addEventListener('load', handleLoad);
     viewer.addEventListener('error', handleError);
     viewer.addEventListener('progress', handleProgress);
-    return () => {
+    return () => { // eslint-disable-next-line react-hooks/exhaustive-deps
       viewer.removeEventListener('load', handleLoad);
       viewer.removeEventListener('error', handleError);
       viewer.removeEventListener('progress', handleProgress);
     };
-  }, [src, handleLoad, handleError, handleProgress]);
+  }, [src, config, handleLoad, handleError, handleProgress]);
   const viewerStyle = useMemo(() => ({
     width: '100%',
     height: '100%',

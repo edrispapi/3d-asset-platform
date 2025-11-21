@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Box, Layers, Smartphone, Zap } from 'lucide-react';
 import { ModelViewerWrapper } from '@/components/ui/model-viewer-wrapper';
-import { DEFAULT_VIEWER_CONFIG } from '@/lib/types';
+import { DEFAULT_VIEWER_CONFIG } from '@shared/types';
 import { useAppStore } from '@/lib/store';
 export function HomePage() {
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);

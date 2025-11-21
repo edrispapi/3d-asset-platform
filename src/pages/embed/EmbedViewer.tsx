@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ModelViewerWrapper } from '@/components/ui/model-viewer-wrapper';
 import { Loader2, AlertTriangle } from 'lucide-react';
-import { Model3D } from '@/lib/types';
+import { Model3D } from '@shared/types';
 import { api } from '@/lib/api-client';
 export function EmbedViewer() {
   const { id } = useParams<{ id: string }>();
