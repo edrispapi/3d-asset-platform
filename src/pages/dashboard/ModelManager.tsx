@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/lib/store';
 import { ModelCard } from '@/components/dashboard/ModelCard';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ import { Model3D } from '@/lib/types';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 export function ModelManager() {
+  const navigate = useNavigate();
   const models = useAppStore((state) => state.models);
   const isLoading = useAppStore((state) => state.isLoading);
   const fetchModels = useAppStore((state) => state.fetchModels);
@@ -52,15 +54,15 @@ export function ModelManager() {
     model.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const handleView = (model: Model3D) => {
-    toast.info(`Opening ${model.title}...`, { description: 'Detail view coming in Phase 3' });
+    navigate(`/dashboard/models/${model.id}`);
   };
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-48 w-full" />
+              <Skeleton className="aspect-[4/3] w-full" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </div>
@@ -70,7 +72,7 @@ export function ModelManager() {
     }
     if (filteredModels.length > 0) {
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredModels.map((model) => (
             <ModelCard key={model.id} model={model} onDelete={deleteModel} onView={handleView} />
           ))}
@@ -112,23 +114,11 @@ export function ModelManager() {
               <form onSubmit={handleAddModel} className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="title" className="text-zinc-300">Model Title</Label>
-                  <Input
-                    id="title"
-                    value={newModelTitle}
-                    onChange={(e) => setNewModelTitle(e.target.value)}
-                    placeholder="e.g. Vintage Chair"
-                    className="bg-zinc-900 border-zinc-800 focus:border-blue-500"
-                  />
+                  <Input id="title" value={newModelTitle} onChange={(e) => setNewModelTitle(e.target.value)} placeholder="e.g. Vintage Chair" className="bg-zinc-900 border-zinc-800 focus:border-blue-500" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="url" className="text-zinc-300">GLB File URL</Label>
-                  <Input
-                    id="url"
-                    value={newModelUrl}
-                    onChange={(e) => setNewModelUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="bg-zinc-900 border-zinc-800 focus:border-blue-500"
-                  />
+                  <Input id="url" value={newModelUrl} onChange={(e) => setNewModelUrl(e.target.value)} placeholder="https://..." className="bg-zinc-900 border-zinc-800 focus:border-blue-500" />
                 </div>
               </form>
               <DialogFooter>
@@ -141,12 +131,7 @@ export function ModelManager() {
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <Input
-              placeholder="Search models..."
-              className="pl-9 bg-zinc-950 border-zinc-800 focus:border-zinc-700"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <Input placeholder="Search models..." className="pl-9 bg-zinc-950 border-zinc-800 focus:border-zinc-700" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <Select defaultValue="all">

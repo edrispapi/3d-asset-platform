@@ -2,26 +2,23 @@ import React, { useEffect, useRef, useState } from 'react';
 import '@google/model-viewer';
 import { ViewerConfig } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
-// Declare the custom element to satisfy TypeScript
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        src?: string;
-        poster?: string;
-        alt?: string;
-        'auto-rotate'?: boolean;
-        'camera-controls'?: boolean;
-        ar?: boolean;
-        'ar-modes'?: string;
-        'shadow-intensity'?: number;
-        exposure?: number;
-        loading?: 'auto' | 'lazy' | 'eager';
-        reveal?: 'auto' | 'interaction' | 'manual';
-        style?: React.CSSProperties;
-        // Add other props as needed
-      };
-    }
+// This augmentation allows the custom element 'model-viewer' to be used in JSX.
+declare module 'react' {
+  interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
+    // Add custom element properties here
+    src?: string;
+    poster?: string;
+    alt?: string;
+    'auto-rotate'?: boolean;
+    'camera-controls'?: boolean;
+    ar?: boolean;
+    'ar-modes'?: string;
+    'shadow-intensity'?: number;
+    exposure?: number;
+    loading?: 'auto' | 'lazy' | 'eager';
+    reveal?: 'auto' | 'interaction' | 'manual';
+    // This is a catch-all for any other properties
+    [key: string]: any;
   }
 }
 interface ModelViewerWrapperProps {
@@ -31,6 +28,9 @@ interface ModelViewerWrapperProps {
   config: ViewerConfig;
   className?: string;
   autoPlay?: boolean;
+  theme?: {
+    backgroundColor?: string;
+  };
 }
 export function ModelViewerWrapper({
   src,
@@ -39,6 +39,7 @@ export function ModelViewerWrapper({
   config,
   className,
   autoPlay = false,
+  theme = {},
 }: ModelViewerWrapperProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -46,19 +47,25 @@ export function ModelViewerWrapper({
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer) return;
-    const handleLoad = () => {
-      setIsLoading(false);
-    };
+    const handleLoad = () => setIsLoading(false);
     const handleError = (event: Event) => {
-      console.error('Model viewer error:', event);
+      console.warn('Model viewer error:', event);
       setIsLoading(false);
       setLoadError('Failed to load 3D model. Check URL and CORS policy.');
     };
+    const handleProgress = (event: CustomEvent) => {
+      const progressBar = viewer.querySelector('#progress-bar-fill') as HTMLElement;
+      if (progressBar) {
+        progressBar.style.width = `${event.detail.totalProgress * 100}%`;
+      }
+    };
     viewer.addEventListener('load', handleLoad);
     viewer.addEventListener('error', handleError);
+    viewer.addEventListener('progress', handleProgress);
     return () => {
       viewer.removeEventListener('load', handleLoad);
       viewer.removeEventListener('error', handleError);
+      viewer.removeEventListener('progress', handleProgress);
     };
   }, [src]);
   if (loadError) {
@@ -90,15 +97,15 @@ export function ModelViewerWrapper({
         shadow-intensity={config.shadowIntensity}
         exposure={config.exposure}
         loading="eager"
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', backgroundColor: theme.backgroundColor || 'transparent' }}
       >
         <button
           slot="ar-button"
-          className="absolute bottom-4 right-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium shadow-lg transform transition-transform active:scale-95 hidden md:block"
+          className="absolute bottom-4 right-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium shadow-lg transform transition-transform active:scale-95 opacity-0 group-hover:opacity-100"
         >
           View in AR
         </button>
-        <div slot="progress-bar" className="absolute top-0 left-0 w-full h-1 bg-zinc-800">
+        <div slot="progress-bar" className="absolute top-0 left-0 w-full h-1 bg-zinc-800/50">
           <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: '0%' }} id="progress-bar-fill"></div>
         </div>
       </model-viewer>
