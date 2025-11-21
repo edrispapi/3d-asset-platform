@@ -18,8 +18,8 @@ const SEED_MODELS: Model3D[] = [
   {
     id: 'm1',
     title: 'Astronaut',
-    url: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
-    posterUrl: 'https://modelviewer.dev/shared-assets/models/Astronaut.webp',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Astronaut/glTF-Binary/Astronaut.glb',
+    posterUrl: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Astronaut/thumbnail.png',
     createdAt: Date.now(),
     config: { ...DEFAULT_VIEWER_CONFIG },
     size: '2.5MB',
@@ -27,7 +27,8 @@ const SEED_MODELS: Model3D[] = [
   {
     id: 'm2',
     title: 'Neil Armstrong Spacesuit',
-    url: 'https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/NeilArmstrong/glTF-Binary/NeilArmstrong.glb',
+    posterUrl: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/NeilArmstrong/thumbnail.png',
     createdAt: Date.now() - 100000,
     config: { ...DEFAULT_VIEWER_CONFIG, autoRotate: false },
     size: '5.1MB',
@@ -35,7 +36,8 @@ const SEED_MODELS: Model3D[] = [
   {
     id: 'm3',
     title: 'Canoe',
-    url: 'https://modelviewer.dev/shared-assets/models/Canoe.glb',
+    url: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Canoe/glTF-Binary/Canoe.glb',
+    posterUrl: 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Canoe/thumbnail.png',
     createdAt: Date.now() - 200000,
     config: { ...DEFAULT_VIEWER_CONFIG },
     size: '8.2MB',
