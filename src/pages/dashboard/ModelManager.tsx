@@ -12,20 +12,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  DialogTrigger } from
+'@/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  SelectValue } from
+'@/components/ui/select';
 import { Model3D, DEFAULT_VIEWER_CONFIG } from '@/lib/types';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';interface BoxProps {children?: React.ReactNode;className?: string;style?: React.CSSProperties;[key: string]: unknown;}
 export function ModelManager() {
-  // Using Zustand selectors for primitive values or stable references
+
   const models = useAppStore((state) => state.models);
   const addModel = useAppStore((state) => state.addModel);
   const deleteModel = useAppStore((state) => state.deleteModel);
@@ -45,7 +45,7 @@ export function ModelManager() {
       url: newModelUrl,
       createdAt: Date.now(),
       config: { ...DEFAULT_VIEWER_CONFIG },
-      size: 'Pending',
+      size: 'Pending'
     };
     addModel(newModel);
     toast.success('Model added successfully');
@@ -53,16 +53,16 @@ export function ModelManager() {
     setNewModelUrl('');
     setNewModelTitle('');
   };
-  const filteredModels = models.filter((model) => 
-    model.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredModels = models.filter((model) =>
+  model.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const handleView = (model: Model3D) => {
-    // For now, just a toast, but this would navigate to detail view
+
     toast.info(`Opening ${model.title}...`, { description: 'Detail view coming in Phase 2' });
   };
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header Section */}
+      {}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-zinc-100">3D Assets</h1>
@@ -90,8 +90,8 @@ export function ModelManager() {
                   value={newModelTitle}
                   onChange={(e) => setNewModelTitle(e.target.value)}
                   placeholder="e.g. Vintage Chair"
-                  className="bg-zinc-900 border-zinc-800 focus:border-blue-500"
-                />
+                  className="bg-zinc-900 border-zinc-800 focus:border-blue-500" />
+
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="url" className="text-zinc-300">GLB File URL</Label>
@@ -100,8 +100,8 @@ export function ModelManager() {
                   value={newModelUrl}
                   onChange={(e) => setNewModelUrl(e.target.value)}
                   placeholder="https://..."
-                  className="bg-zinc-900 border-zinc-800 focus:border-blue-500"
-                />
+                  className="bg-zinc-900 border-zinc-800 focus:border-blue-500" />
+
               </div>
             </form>
             <DialogFooter>
@@ -111,16 +111,16 @@ export function ModelManager() {
           </DialogContent>
         </Dialog>
       </div>
-      {/* Filters & Search */}
+      {}
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <Input 
-            placeholder="Search models..." 
+          <Input
+            placeholder="Search models..."
             className="pl-9 bg-zinc-950 border-zinc-800 focus:border-zinc-700"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+            onChange={(e) => setSearchQuery(e.target.value)} />
+
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Select defaultValue="all">
@@ -135,27 +135,27 @@ export function ModelManager() {
           </Select>
         </div>
       </div>
-      {/* Grid */}
-      {filteredModels.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-          {filteredModels.map((model) => (
-            <ModelCard 
-              key={model.id} 
-              model={model} 
-              onDelete={deleteModel} 
-              onView={handleView}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-800 rounded-xl bg-zinc-900/20">
+      {}
+      {filteredModels.length > 0 ?
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
+          {filteredModels.map((model) =>
+        <ModelCard
+          key={model.id}
+          model={model}
+          onDelete={deleteModel}
+          onView={handleView} />
+
+        )}
+        </div> :
+
+      <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-zinc-800 rounded-xl bg-zinc-900/20">
           <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mb-4">
             <Box className="w-6 h-6 text-zinc-600" />
           </div>
           <h3 className="text-lg font-medium text-zinc-300">No models found</h3>
           <p className="text-zinc-500 mt-1">Try adjusting your search or add a new model.</p>
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
