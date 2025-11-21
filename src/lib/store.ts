@@ -32,6 +32,9 @@ interface ModelState {
 }
 interface SettingsState {
   settings: Settings;
+  theme: string;
+  arDefault: boolean;
+  uploadLimit: number;
   fetchSettings: () => Promise<void>;
   updateSettings: (updates: Partial<Settings>) => Promise<void>;
 }
@@ -155,28 +158,37 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   // Settings State
   settings: { theme: 'dark', arDefault: true, uploadLimit: 50 },
+  theme: 'dark',
+  arDefault: true,
+  uploadLimit: 50,
   fetchSettings: async () => {
     try {
       const settings = await api<Settings>('/api/settings');
-      set({ settings });
+      set({ settings, theme: settings.theme, arDefault: settings.arDefault, uploadLimit: settings.uploadLimit });
     } catch (error) {
       console.warn('Could not fetch settings, using defaults.');
     }
   },
   updateSettings: async (updates) => {
     const originalSettings = get().settings;
-    set(state => ({ settings: { ...state.settings, ...updates } }));
+    set(state => ({
+      settings: { ...state.settings, ...updates },
+      theme: updates.theme ?? state.settings.theme,
+      arDefault: updates.arDefault ?? state.settings.arDefault,
+      uploadLimit: updates.uploadLimit ?? state.settings.uploadLimit,
+    }));
     try {
       const updatedSettings = await api<Settings>('/api/settings', {
         method: 'PATCH',
         body: JSON.stringify(updates),
       });
-      set({ settings: updatedSettings });
+      set({ settings: updatedSettings, theme: updatedSettings.theme, arDefault: updatedSettings.arDefault, uploadLimit: updatedSettings.uploadLimit });
     } catch (error) {
-      set({ settings: originalSettings });
+      set({ settings: originalSettings, theme: originalSettings.theme, arDefault: originalSettings.arDefault, uploadLimit: originalSettings.uploadLimit });
       toast.error('Failed to update settings.');
       throw error;
     }
   },
-}));
+})); 
  // Initialize auth state on load
+useAppStore.getState().checkAuth();

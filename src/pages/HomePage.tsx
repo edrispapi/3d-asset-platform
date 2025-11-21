@@ -7,7 +7,7 @@ import { DEFAULT_VIEWER_CONFIG } from '@shared/types';
 import { useAppStore } from '@/lib/store';
 export function HomePage() {
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
-  const GetStartedButton = () => (
+  const GetStartedButton = (
     <Link to={isAuthenticated ? "/dashboard" : "/login"}>
       <Button size="lg" className="h-12 px-8 bg-white text-zinc-950 hover:bg-zinc-200 text-base font-semibold rounded-full w-full sm:w-auto">
         {isAuthenticated ? 'Go to Dashboard' : 'Start for free'}
@@ -55,7 +55,7 @@ export function HomePage() {
                     The fastest way to manage, visualize, and embed 3D assets. Transform your e-commerce experience with immersive WebAR technology.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <GetStartedButton />
+                    {GetStartedButton}
                   </div>
                 </div>
                 <div className="relative h-[500px] w-full bg-zinc-900/30 rounded-2xl border border-zinc-800/50 backdrop-blur-sm overflow-hidden shadow-2xl shadow-black/50 lg:order-last order-first">
